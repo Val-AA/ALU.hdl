@@ -1,0 +1,33 @@
+CHIP ALU1.0 {
+    IN  x[16], y[16], zx, nx, zy, ny, f, no;
+    OUT out[16], zr, ng;
+
+    PARTS:
+    // Procesar x
+    Not16(in=x, out=Notx);
+    Mux4Way16(a=x, b=Notx, c=0000000000000000, d=1111111111111111, sel[1]=zx, sel[0]=nx, out=a);
+    
+    // Procesar y
+    Not16(in=y, out=Noty);
+    Mux4Way16(a=y, b=Noty, c=0000000000000000, d=1111111111111111, sel[1]=zy, sel[0]=ny, out=b);
+    
+    // Operaciones
+    And16(a=a, b=b, out=aANDb);
+    Add16(a=a, b=b, out=aADDb);
+    
+    // Selección de salida
+    Mux16(a=aANDb, b=aADDb, sel=f, out=o);
+    
+    // Negar la salida si es necesario
+    Not16(in=o, out=Noto);
+    Mux16(a=o, b=Noto, sel=no, out=out);
+    
+    // Calcular zr y ng
+    Or8Way(in=out[0..7], out=or8LSB);
+    Or8Way(in=out[8..15], out=or8MSB);
+    Or(a=or8LSB, b=or8MSB, out=or16out);
+    Not(or16out, out=zr);
+    
+    // ng será 1 si el bit más significativo de out es 1
+    ng = out[15];
+}
